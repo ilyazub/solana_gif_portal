@@ -8,5 +8,8 @@
   },
   "dependencies": {
     "@project-serum/anchor": "^0.18.2"
+  },
+  "scripts": {
+    "test": "anchor test"
   }
 }
