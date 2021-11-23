@@ -14,7 +14,6 @@ const main = async () => {
   // Create an account keypair for our program to use
   const baseAccount = anchor.web3.Keypair.generate();
 
-  // Call start_stuff_off, pass it the params it needs
   const tx = await program.rpc.startStuffOff({
     accounts: {
       baseAccount: baseAccount.publicKey,
@@ -30,16 +29,18 @@ const main = async () => {
   let account = await program.account.baseAccount.fetch(baseAccount.publicKey);
   console.log('👀 GIF Count', account.totalGifs.toString());
 
-  // Call add_gif
-  await program.rpc.addGif({
+  await program.rpc.addGif("https://media.giphy.com/media/ZAqgvIkbGPWyE4bY0v/giphy.gif", {
     accounts: {
       baseAccount: baseAccount.publicKey,
+      user: provider.wallet.publicKey,
     }
   });
 
-    // Fetch data from the account to see what changed.
-    account = await program.account.baseAccount.fetch(baseAccount.publicKey);
-    console.log('👀 GIF Count', account.totalGifs.toString());
+  // Fetch data from the account to see what changed.
+  account = await program.account.baseAccount.fetch(baseAccount.publicKey);
+  console.log('👀 GIF Count', account.totalGifs.toString());
+
+  console.log('👀 GIF List', account.gifList);
 }
 
 const runMain = async () => {
