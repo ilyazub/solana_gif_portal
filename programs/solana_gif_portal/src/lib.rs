@@ -20,12 +20,27 @@ pub mod solana_gif_portal {
         let item = ItemStruct {
             gif_link: gif_link,
             user_address: *user.to_account_info().key,
+            upvotes: 0,
         };
 
         base_account.gif_list.push(item);
         base_account.total_gifs += 1;
 
         Ok(())
+    }
+
+    pub fn upvote_gif(ctx: Context<Upvote>, gif_link: String) -> ProgramResult {
+        let base_account = &mut ctx.accounts.base_account;
+
+        let gif = base_account.gif_list.iter_mut().find(|gif| gif.gif_link == gif_link);
+
+        if let Some(gif) = gif {
+            gif.upvotes += 1;
+
+            Ok(())
+        } else {
+            Err(ProgramError::InvalidArgument)
+        }
     }
 }
 
@@ -48,6 +63,12 @@ pub struct AddGif<'info> {
     pub user: Signer<'info>,
 }
 
+#[derive(Accounts)]
+pub struct Upvote<'info> {
+    #[account(mut)]
+    pub base_account: Account<'info, BaseAccount>,
+}
+
 #[account]
 pub struct BaseAccount {
     pub total_gifs: u64,
@@ -59,4 +80,5 @@ pub struct BaseAccount {
 pub struct ItemStruct {
     pub gif_link: String,
     pub user_address: Pubkey,
+    pub upvotes: u64,
 }

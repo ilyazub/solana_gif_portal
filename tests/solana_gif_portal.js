@@ -41,6 +41,18 @@ const main = async () => {
   console.log('👀 GIF Count', account.totalGifs.toString());
 
   console.log('👀 GIF List', account.gifList);
+
+  // Upvote
+  console.log('👀 First GIF *before* upvote', account.gifList[0]);
+  await program.rpc.upvoteGif(account.gifList[0].gifLink, {
+    accounts: {
+      baseAccount: baseAccount.publicKey,
+      user: provider.wallet.publicKey,
+    }
+  });
+
+  account = await program.account.baseAccount.fetch(baseAccount.publicKey);
+  console.log('👀 First GIF *after* upvote', account.gifList[0]);
 }
 
 const runMain = async () => {
