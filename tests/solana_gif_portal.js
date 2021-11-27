@@ -1,18 +1,19 @@
 const anchor = require("@project-serum/anchor");
 
-const { SystemProgram } = anchor.web3;
+const { SystemProgram, Keypair } = anchor.web3;
+const { BN, Provider } = anchor;
 
 const main = async () => {
   console.log("🚀 Starting test...");
 
   // Create and set the provider. We set it before but we needed to update it, so that it can communicate with our frontend.
-  const provider = anchor.Provider.env();
+  const provider = Provider.env();
   anchor.setProvider(provider);
 
   const program = anchor.workspace.SolanaGifPortal;
 
   // Create an account keypair for our program to use
-  const baseAccount = anchor.web3.Keypair.generate();
+  const baseAccount = Keypair.generate();
 
   const tx = await program.rpc.startStuffOff({
     accounts: {
@@ -39,7 +40,6 @@ const main = async () => {
   // Fetch data from the account to see what changed.
   account = await program.account.baseAccount.fetch(baseAccount.publicKey);
   console.log('👀 GIF Count', account.totalGifs.toString());
-
   console.log('👀 GIF List', account.gifList);
 
   // Upvote
@@ -53,6 +53,26 @@ const main = async () => {
 
   account = await program.account.baseAccount.fetch(baseAccount.publicKey);
   console.log('👀 First GIF *after* upvote', account.gifList[0]);
+
+  // Send tip
+  let senderBalance = await program.provider.connection.getBalance(provider.wallet.publicKey);
+  let receiverAccount = Keypair.generate();
+  let receiverBalance = await program.provider.connection.getBalance(receiverAccount.publicKey);
+  let amountToSend = 1.337.toString();
+  console.log("👀 Assets before the tip. Sender: %o lamports. Receiver: %o lamports. Sending: %o SOL", senderBalance, receiverBalance, amountToSend);
+
+  await program.rpc.tip(amountToSend, {
+    accounts: {
+      from: provider.wallet.publicKey,
+      to: receiverAccount.publicKey,
+      systemProgram: SystemProgram.programId,
+    }
+  });
+
+  let delta = senderBalance - await program.provider.connection.getBalance(provider.wallet.publicKey);
+  senderBalance = await program.provider.connection.getBalance(provider.wallet.publicKey);
+  receiverBalance = await program.provider.connection.getBalance(receiverAccount.publicKey);
+  console.log("👀 Assets after the tip. Sender: %o lamports. Receiver: %o lamports. Delta: %o lamports", senderBalance, receiverBalance, delta);
 }
 
 const runMain = async () => {

@@ -18,7 +18,7 @@ pub mod solana_gif_portal {
         let user = &mut ctx.accounts.user;
 
         let item = ItemStruct {
-            gif_link: gif_link,
+            gif_link,
             user_address: *user.to_account_info().key,
             upvotes: 0,
         };
@@ -32,7 +32,10 @@ pub mod solana_gif_portal {
     pub fn upvote_gif(ctx: Context<Upvote>, gif_link: String) -> ProgramResult {
         let base_account = &mut ctx.accounts.base_account;
 
-        let gif = base_account.gif_list.iter_mut().find(|gif| gif.gif_link == gif_link);
+        let gif = base_account
+            .gif_list
+            .iter_mut()
+            .find(|gif| gif.gif_link == gif_link);
 
         if let Some(gif) = gif {
             gif.upvotes += 1;
@@ -41,6 +44,36 @@ pub mod solana_gif_portal {
         } else {
             Err(ProgramError::InvalidArgument)
         }
+    }
+
+    // Passing a string to handle floats
+    pub fn tip(ctx: Context<Tip>, amount: String) -> ProgramResult {
+        assert_ne!(
+            &ctx.accounts.from.key(),
+            &ctx.accounts.to.key(),
+            "Trying to send assets to the same account"
+        );
+
+        let lamports: u64 = match amount.trim().parse::<f64>() {
+            Ok(amount) => (amount * 1e9) as u64,
+            Err(_) => return Err(ProgramError::InvalidArgument),
+        };
+
+        let ix = anchor_lang::solana_program::system_instruction::transfer(
+            &ctx.accounts.from.key(),
+            &ctx.accounts.to.key(),
+            lamports,
+        );
+
+        anchor_lang::solana_program::program::invoke(
+            &ix,
+            &[
+                ctx.accounts.from.to_account_info(),
+                ctx.accounts.to.to_account_info(),
+            ],
+        )?;
+
+        Ok(())
     }
 }
 
@@ -81,4 +114,15 @@ pub struct ItemStruct {
     pub gif_link: String,
     pub user_address: Pubkey,
     pub upvotes: u64,
+}
+
+#[derive(Accounts)]
+pub struct Tip<'info> {
+    #[account(mut)]
+    from: Signer<'info>,
+
+    #[account(mut)]
+    to: AccountInfo<'info>,
+
+    system_program: Program<'info, System>,
 }
