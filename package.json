@@ -12,6 +12,8 @@
   "scripts": {
     "test": "anchor test",
     "build": "anchor build",
-    "deploy": "anchor deploy && cp ./target/idl/solana_gif_portal.json ./app/src/idl.json"
+    "deploy": "anchor deploy && yarn copyIdl && yarn copyTypes",
+    "copyIdl": "cp ./target/idl/solana_gif_portal.json ./app/src/idl.json",
+    "copyTypes": "cp ./target/types/solana_gif_portal.ts ./app/src/solana_gif_portal.ts"
   }
 }
